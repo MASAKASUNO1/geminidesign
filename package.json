@@ -2,6 +2,14 @@
   "name": "@aimasaou/geminidesign",
   "version": "1.0.0",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MASAKASUNO1/geminidesign.git"
+  },
+  "homepage": "https://github.com/MASAKASUNO1/geminidesign#readme",
+  "bugs": {
+    "url": "https://github.com/MASAKASUNO1/geminidesign/issues"
+  },
   "bin": {
     "geminidesign": "bin/geminidesign.js"
   },
