@@ -1,7 +1,7 @@
 import { GoogleGenAI } from '@google/genai';
-import { MODEL_NAME } from './config.js';
+import { DEFAULT_MODEL } from './config.js';
 
-export async function generateHtml(prompt, apiKey) {
+export async function generateHtml(prompt, apiKey, model) {
   const ai = new GoogleGenAI({ apiKey });
 
   const systemInstruction = `あなたはWebデザインの専門家です。ユーザーの要望に基づいて、完全なHTMLファイルを1つ生成してください。
@@ -11,7 +11,7 @@ export async function generateHtml(prompt, apiKey) {
 - HTMLコードのみを返してください。説明文は不要です。`;
 
   const response = await ai.models.generateContent({
-    model: MODEL_NAME,
+    model: model || DEFAULT_MODEL,
     contents: [{ role: 'user', parts: [{ text: prompt }] }],
     config: { systemInstruction },
   });

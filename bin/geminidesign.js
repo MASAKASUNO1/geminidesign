@@ -4,9 +4,17 @@ import { Command } from 'commander';
 import { generateHtml } from '../src/generate.js';
 import { addEntry, loadHistory, getEntry, readEntryHtml } from '../src/history.js';
 import { login, requireApiKey } from '../src/auth.js';
-import { LOGO } from '../src/config.js';
+import { LOGO, AVAILABLE_MODELS } from '../src/config.js';
 
 const DEFAULT_LIMIT = 30;
+
+function resolveModel(name) {
+  if (!name) return undefined;
+  if (AVAILABLE_MODELS[name]) return AVAILABLE_MODELS[name];
+  console.error(`不明なモデル: ${name}`);
+  console.error(`利用可能: ${Object.keys(AVAILABLE_MODELS).join(', ')}`);
+  process.exit(1);
+}
 
 function formatEntry(e) {
   const shortPrompt = e.prompt.length > 50 ? e.prompt.slice(0, 50) + '...' : e.prompt;
@@ -36,7 +44,7 @@ const program = new Command();
 program
   .name('geminidesign')
   .description('Gemini 3 Flash でHTMLデザインを生成するCLIツール')
-  .version('1.0.0');
+  .version('1.1.0');
 
 program
   .command('login')
@@ -49,11 +57,13 @@ program
   .command('gen <prompt>')
   .description('プロンプトからHTMLを生成')
   .option('-o, --output <path>', '出力先ファイルパス')
+  .option('-m, --model <model>', 'モデルを指定 (gemini-3-flash | gemini-3-pro)')
   .action(async (prompt, opts) => {
     const apiKey = await requireApiKey();
+    const model = resolveModel(opts.model);
     try {
-      console.log('生成中...');
-      const html = await generateHtml(prompt, apiKey);
+      console.log(`生成中... (${opts.model || 'gemini-3-flash'})`);
+      const html = await generateHtml(prompt, apiKey, model);
       const entry = await addEntry(prompt, html, opts.output);
       console.log(`生成完了: ID=${entry.id}`);
       console.log(`保存先: ${entry.outputPath}`);
@@ -107,16 +117,18 @@ program
   .command('regen <id>')
   .description('指定IDのプロンプトで再生成')
   .option('-o, --output <path>', '出力先ファイルパス')
+  .option('-m, --model <model>', 'モデルを指定 (gemini-3-flash | gemini-3-pro)')
   .action(async (id, opts) => {
     const apiKey = await requireApiKey();
+    const model = resolveModel(opts.model);
     const entry = await getEntry(Number(id));
     if (!entry) {
       console.error(`ID ${id} は見つかりません。`);
       process.exit(1);
     }
     try {
-      console.log(`再生成中 (元プロンプト: "${entry.prompt}")...`);
-      const html = await generateHtml(entry.prompt, apiKey);
+      console.log(`再生成中 (元プロンプト: "${entry.prompt}") [${opts.model || 'gemini-3-flash'}]...`);
+      const html = await generateHtml(entry.prompt, apiKey, model);
       const newEntry = await addEntry(entry.prompt, html, opts.output);
       console.log(`再生成完了: ID=${newEntry.id}`);
       console.log(`保存先: ${newEntry.outputPath}`);
